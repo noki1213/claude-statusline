@@ -92,3 +92,74 @@ Add the following to `~/.claude/settings.json`:
 ## Reference / 参考
 
 - [loadbalance-sudachi-kun/claude-code-statusline](https://github.com/loadbalance-sudachi-kun/claude-code-statusline)
+
+---
+
+# 日本語ドキュメント
+
+Claude Code のカスタムステータスラインスクリプトです。コンテキスト使用率・レートリミットのプログレスバー・git 情報などを表示します。
+
+## プレビュー
+
+```
+~/00_Home_Local/20_dev/claude-statusline
+git: claude-statusline [main]
+Claude Sonnet 4.6 │ CTX 12%
+5h  ███░░░░░░░  34%
+7d  █░░░░░░░░░  8%
+```
+
+## 表示内容
+
+| 行 | 内容 |
+|----|------|
+| 1 | 現在のディレクトリパス |
+| 2 | git リポジトリ名とブランチ名（git リポジトリ内のみ） |
+| 3 | モデル名 \| コンテキスト使用率 |
+| 4 | 5 時間レートリミットのプログレスバー |
+| 5 | 7 日間レートリミットのプログレスバー |
+
+使用率に応じて色が変わります：緑（50% 未満）→ 黄（50〜79%）→ 赤（80% 以上）
+
+## 必要なもの
+
+- macOS
+- [Claude Code](https://claude.ai/code)
+- `jq`
+- `curl`
+- `bash`
+
+`jq` のインストール（未インストールの場合）:
+```bash
+brew install jq
+```
+
+## セットアップ
+
+### 1. クローン
+
+```bash
+git clone https://github.com/noki1213/claude-statusline.git
+cd claude-statusline
+chmod +x statusline-claude.sh
+```
+
+### 2. Claude Code に設定する
+
+`~/.claude/settings.json` に以下を追加します：
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "bash /path/to/claude-statusline/statusline-claude.sh"
+  }
+}
+```
+
+`/path/to/claude-statusline/` の部分は実際のパスに変更してください。
+
+## 備考
+
+- レートリミット情報は Claude Haiku モデルへの最小リクエストで取得します。API 呼び出しを抑えるため、結果は 6 分間キャッシュされます。
+- 認証情報は macOS のキーチェーンから読み取ります（Claude Code が自動で設定）。
