@@ -90,17 +90,18 @@ if [ -n "$cwd" ] && [ -d "$cwd" ]; then
 		git_repo=$(basename "$git_toplevel")
 
 		# git の状態を調べて色を決める
-		# まず未コミットの変更（編集・削除・ステージ済みなど）があるか確認する
 		porcelain=$(git -C "$cwd" --no-optional-locks status --porcelain 2>/dev/null || true)
-		has_uncommitted=$(echo "$porcelain" | grep -v '^??' | grep -c '[^ ]' 2>/dev/null || echo 0)
-		has_untracked=$(echo "$porcelain" | grep -c '^??' 2>/dev/null || echo 0)
+		# 未ステージの変更がある（新規・編集・削除を含む）か確認する（2文字目がスペース以外）
+		has_unstaged=$(echo "$porcelain" | grep -c '^.[^ ]' 2>/dev/null || echo 0)
+		# ステージ済みだが未コミットの変更があるか確認する（1文字目が変更あり・2文字目がスペース）
+		has_staged=$(echo "$porcelain" | grep -c '^[^ ?] ' 2>/dev/null || echo 0)
 
-		if [ "$has_uncommitted" -gt 0 ]; then
-			# 未コミットの変更がある → 黄
-			git_line_color="$YELLOW"
-		elif [ "$has_untracked" -gt 0 ]; then
-			# 未追跡ファイルだけある → 赤
+		if [ "$has_unstaged" -gt 0 ]; then
+			# 未ステージの変更がある（git add が必要）→ 赤
 			git_line_color="$RED"
+		elif [ "$has_staged" -gt 0 ]; then
+			# git add 済みだが未コミット → 黄
+			git_line_color="$YELLOW"
 		else
 			# リモートが設定されているか確認する
 			has_remote=$(git -C "$cwd" --no-optional-locks remote 2>/dev/null | wc -l | tr -d ' ')
