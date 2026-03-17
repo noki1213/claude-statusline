@@ -248,7 +248,11 @@ countdown() {
 	local days=$(( diff / 86400 ))
 	local hours=$(( (diff % 86400) / 3600 ))
 	local mins=$(( (diff % 3600) / 60 ))
-	printf '%dd%dh%dm' "$days" "$hours" "$mins"
+	if [ "$days" -eq 0 ]; then
+		printf '  %2dh%2dm' "$hours" "$mins"
+	else
+		printf '%dd%2dh%2dm' "$days" "$hours" "$mins"
+	fi
 }
 
 five_reset_display=""
