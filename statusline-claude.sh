@@ -14,6 +14,7 @@ YELLOW=$'\e[38;2;244;201;128m'
 RED=$'\e[38;2;252;156;156m'
 BLUE=$'\e[38;2;74;143;191m'
 CYAN=$'\e[38;2;74;174;200m'
+MAGENTA=$'\e[38;2;184;127;204m'
 WHITE=$'\e[38;2;196;196;196m'
 GRAY=$'\e[38;2;74;88;92m'
 RESET=$'\e[0m'
@@ -293,9 +294,17 @@ if [ -n "$git_repo" ] && [ -n "$git_branch" ]; then
 		[ "$git_unpushed" -gt 0 ] && push_mark="${push_mark} ↑${git_unpushed}"
 		[ "$git_behind" -gt 0 ] && push_mark="${push_mark} ↓${git_behind}"
 	fi
-	line2="${git_line_color} ${git_repo} [${git_branch}]${push_mark}${RESET}"
+	if [ "$git_branch" = "main" ] || [ "$git_branch" = "master" ]; then
+		line2="${git_line_color} ${git_repo} [${git_branch}]${push_mark}${RESET}"
+	else
+		line2="${git_line_color} ${git_repo} ${MAGENTA}[${git_branch}]${git_line_color}${push_mark}${RESET}"
+	fi
 elif [ -n "$git_branch" ]; then
-	line2="${git_line_color} [${git_branch}]${push_mark}${RESET}"
+	if [ "$git_branch" = "main" ] || [ "$git_branch" = "master" ]; then
+		line2="${git_line_color} [${git_branch}]${push_mark}${RESET}"
+	else
+		line2="${git_line_color} ${MAGENTA}[${git_branch}]${git_line_color}${push_mark}${RESET}"
+	fi
 fi
 
 # 3行目：モデル名 + CTX
