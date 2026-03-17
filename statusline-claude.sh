@@ -14,6 +14,7 @@ YELLOW=$'\e[38;2;244;201;128m'
 RED=$'\e[38;2;252;156;156m'
 BLUE=$'\e[38;2;74;143;191m'
 CYAN=$'\e[38;2;74;174;200m'
+WHITE=$'\e[38;2;196;196;196m'
 GRAY=$'\e[38;2;74;88;92m'
 RESET=$'\e[0m'
 DIM=$'\e[2m'
@@ -247,7 +248,7 @@ SEP="${GRAY} │ ${RESET}"
 ctx_color=$(color_for_pct "$ctx_pct_int")
 
 # 1行目：ディレクトリ
-line1="${CYAN}󰉋 ${dir_name}${RESET}"
+line1="${WHITE}󰉋 ${dir_name}${RESET}"
 
 # 2行目：git（リポジトリ内の場合のみ）
 line2=""
@@ -271,10 +272,10 @@ line4=""
 if [ -n "$FIVE_HOUR_PCT" ]; then
 	c5=$(color_for_pct "$FIVE_HOUR_PCT")
 	bar5=$(progress_bar "$FIVE_HOUR_PCT")
-	line4="${c5}5h  ${bar5}  ${FIVE_HOUR_PCT}%${RESET}"
+	line4="${c5}5h  ${bar5}  $(printf '%3s' "${FIVE_HOUR_PCT}")%${RESET}"
 	[ -n "$five_reset_display" ] && line4+="  ${five_reset_display}"
 else
-	line4="${GRAY}5h  ░░░░░░░░░░  --%${RESET}"
+	line4="${GRAY}5h  ░░░░░░░░░░   --%${RESET}"
 fi
 
 # ---------- 5行目（7日間レートリミット）----------
@@ -282,10 +283,10 @@ line5=""
 if [ -n "$SEVEN_DAY_PCT" ]; then
 	c7=$(color_for_pct "$SEVEN_DAY_PCT")
 	bar7=$(progress_bar "$SEVEN_DAY_PCT")
-	line5="${c7}7d  ${bar7}  ${SEVEN_DAY_PCT}%${RESET}"
+	line5="${c7}7d  ${bar7}  $(printf '%3s' "${SEVEN_DAY_PCT}")%${RESET}"
 	[ -n "$seven_reset_display" ] && line5+="  ${seven_reset_display}"
 else
-	line5="${GRAY}7d  ░░░░░░░░░░  --%${RESET}"
+	line5="${GRAY}7d  ░░░░░░░░░░   --%${RESET}"
 fi
 
 # ---------- 出力 ----------
