@@ -38,15 +38,20 @@ color_for_pct() {
 }
 
 # ---------- プログレスバー（10セグメント）----------
+# $1: 実際の使用率(%)、$2: 理想位置マス番号(1〜10、省略可)
 progress_bar() {
 	local pct="$1"
+	local ideal="${2:-}"
 	local filled
 	filled=$(awk "BEGIN{printf \"%d\", int($pct / 10 + 0.5)}" 2>/dev/null || echo 0)
 	[ "$filled" -gt 10 ] 2>/dev/null && filled=10
 	[ "$filled" -lt 0 ] 2>/dev/null && filled=0
 	local bar=""
 	for i in $(seq 1 10); do
-		if [ "$i" -le "$filled" ]; then
+		if [ -n "$ideal" ] && [ "$i" -eq "$ideal" ]; then
+			# 理想位置マスは ┃ で上書きする
+			bar="${bar}┃"
+		elif [ "$i" -le "$filled" ]; then
 			bar="${bar}█"
 		else
 			bar="${bar}░"
@@ -211,6 +216,27 @@ to_pct() {
 FIVE_HOUR_PCT=$(to_pct "$FIVE_HOUR_UTIL")
 SEVEN_DAY_PCT=$(to_pct "$SEVEN_DAY_UTIL")
 
+# ---------- 理想位置マスを計算する（リセット時刻から逆算）----------
+# リセット時刻 - ウィンドウ幅 = 開始時刻、現在時刻との差で経過割合を求める
+ideal_bar_pos() {
+	local reset_epoch="$1"
+	local window_sec="$2"
+	[ -z "$reset_epoch" ] || [ "$reset_epoch" = "0" ] && echo "" && return
+	local now
+	now=$(date +%s)
+	local start=$(( reset_epoch - window_sec ))
+	local elapsed=$(( now - start ))
+	[ "$elapsed" -le 0 ] && echo "1" && return
+	local pos
+	pos=$(awk "BEGIN{printf \"%d\", int($elapsed / $window_sec * 10 + 0.5)}" 2>/dev/null || echo "")
+	[ "$pos" -gt 10 ] 2>/dev/null && pos=10
+	[ "$pos" -lt 1 ] 2>/dev/null && pos=1
+	echo "$pos"
+}
+
+IDEAL5=$(ideal_bar_pos "$FIVE_HOUR_RESET" "18000")   # 5時間 = 18000秒
+IDEAL7=$(ideal_bar_pos "$SEVEN_DAY_RESET" "604800")  # 7日間 = 604800秒
+
 # ---------- エポック秒から残り時間を Xd XXh XXm 形式に変換する ----------
 countdown() {
 	local epoch="$1"
@@ -271,7 +297,7 @@ line3="${model_name}${SEP}${ctx_color}CTX ${ctx_pct_int}%${RESET}"
 line4=""
 if [ -n "$FIVE_HOUR_PCT" ]; then
 	c5=$(color_for_pct "$FIVE_HOUR_PCT")
-	bar5=$(progress_bar "$FIVE_HOUR_PCT")
+	bar5=$(progress_bar "$FIVE_HOUR_PCT" "$IDEAL5")
 	line4="${c5}5h  ${bar5}  $(printf '%3s' "${FIVE_HOUR_PCT}")%${RESET}"
 	[ -n "$five_reset_display" ] && line4+="  ${five_reset_display}"
 else
@@ -282,7 +308,7 @@ fi
 line5=""
 if [ -n "$SEVEN_DAY_PCT" ]; then
 	c7=$(color_for_pct "$SEVEN_DAY_PCT")
-	bar7=$(progress_bar "$SEVEN_DAY_PCT")
+	bar7=$(progress_bar "$SEVEN_DAY_PCT" "$IDEAL7")
 	line5="${c7}7d  ${bar7}  $(printf '%3s' "${SEVEN_DAY_PCT}")%${RESET}"
 	[ -n "$seven_reset_display" ] && line5+="  ${seven_reset_display}"
 else
