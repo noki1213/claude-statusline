@@ -278,7 +278,7 @@ fi
 
 # ---------- 1行目の組み立て ----------
 SEP="${GRAY} │ ${RESET}"
-ctx_color=$(color_for_pct "$ctx_pct_int")
+ctx_color=$WHITE
 
 # 1行目：ディレクトリ
 line1="${WHITE}󰉋 ${dir_name}${RESET}"
