@@ -81,6 +81,7 @@ git_repo=""
 git_line_color="$GREEN"
 git_no_remote=false
 git_unpushed=0
+git_behind=0
 if [ -n "$cwd" ] && [ -d "$cwd" ]; then
 	git_branch=$(git -C "$cwd" --no-optional-locks rev-parse --abbrev-ref HEAD 2>/dev/null || true)
 	if [ -n "$git_branch" ]; then
@@ -110,6 +111,7 @@ if [ -n "$cwd" ] && [ -d "$cwd" ]; then
 			else
 				# 未プッシュのコミットがあるか確認する
 				git_unpushed=$(git -C "$cwd" --no-optional-locks rev-list "@{u}..HEAD" --count 2>/dev/null || echo 0)
+				git_behind=$(git -C "$cwd" --no-optional-locks rev-list "HEAD..@{u}" --count 2>/dev/null || echo 0)
 				if [ "$git_unpushed" -gt 0 ]; then
 					# 未プッシュのコミットがある → 青
 					git_line_color="$BLUE"
@@ -286,8 +288,9 @@ if [ -n "$git_repo" ] && [ -n "$git_branch" ]; then
 	push_mark=""
 	if $git_no_remote; then
 		push_mark=" ↑✗"
-	elif [ "$git_unpushed" -gt 0 ]; then
-		push_mark=" ↑${git_unpushed}"
+	else
+		[ "$git_unpushed" -gt 0 ] && push_mark="${push_mark} ↑${git_unpushed}"
+		[ "$git_behind" -gt 0 ] && push_mark="${push_mark} ↓${git_behind}"
 	fi
 	line2="${git_line_color} ${git_repo} [${git_branch}]${push_mark}${RESET}"
 elif [ -n "$git_branch" ]; then
