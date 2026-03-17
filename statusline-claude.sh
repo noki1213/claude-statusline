@@ -97,7 +97,7 @@ if [ -n "$cwd" ] && [ -d "$cwd" ]; then
 			git_line_color="$RED"
 		else
 			# リモートが設定されているか確認する
-			has_remote=$(git -C "$cwd" --no-optional-locks remote 2>/dev/null | grep -c '.' || echo 0)
+			has_remote=$(git -C "$cwd" --no-optional-locks remote 2>/dev/null | wc -l | tr -d ' ')
 			if [ "$has_remote" -eq 0 ]; then
 				# リモートなし → 青 + ↑✗ マークをつける
 				git_line_color="$BLUE"
