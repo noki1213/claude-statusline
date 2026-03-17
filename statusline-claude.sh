@@ -12,6 +12,8 @@ input=$(cat)
 GREEN=$'\e[38;2;51;165;165m'
 YELLOW=$'\e[38;2;244;201;128m'
 RED=$'\e[38;2;252;156;156m'
+BLUE=$'\e[38;2;74;143;191m'
+CYAN=$'\e[38;2;74;174;200m'
 GRAY=$'\e[38;2;74;88;92m'
 RESET=$'\e[0m'
 DIM=$'\e[2m'
@@ -70,12 +72,47 @@ fi
 # ---------- git リポジトリ名とブランチ名 ----------
 git_branch=""
 git_repo=""
+git_line_color="$GREEN"
+git_no_remote=false
+git_unpushed=0
 if [ -n "$cwd" ] && [ -d "$cwd" ]; then
 	git_branch=$(git -C "$cwd" --no-optional-locks rev-parse --abbrev-ref HEAD 2>/dev/null || true)
 	if [ -n "$git_branch" ]; then
 		# git のトップレベルディレクトリ名をリポジトリ名として使う
 		git_toplevel=$(git -C "$cwd" --no-optional-locks rev-parse --show-toplevel 2>/dev/null || true)
 		git_repo=$(basename "$git_toplevel")
+
+		# git の状態を調べて色を決める
+		# まず未コミットの変更（編集・削除・ステージ済みなど）があるか確認する
+		porcelain=$(git -C "$cwd" --no-optional-locks status --porcelain 2>/dev/null || true)
+		has_uncommitted=$(echo "$porcelain" | grep -v '^??' | grep -c '[^ ]' 2>/dev/null || echo 0)
+		has_untracked=$(echo "$porcelain" | grep -c '^??' 2>/dev/null || echo 0)
+
+		if [ "$has_uncommitted" -gt 0 ]; then
+			# 未コミットの変更がある → 黄
+			git_line_color="$YELLOW"
+		elif [ "$has_untracked" -gt 0 ]; then
+			# 未追跡ファイルだけある → 赤
+			git_line_color="$RED"
+		else
+			# リモートが設定されているか確認する
+			has_remote=$(git -C "$cwd" --no-optional-locks remote 2>/dev/null | grep -c '.' || echo 0)
+			if [ "$has_remote" -eq 0 ]; then
+				# リモートなし → 青 + ↑✗ マークをつける
+				git_line_color="$BLUE"
+				git_no_remote=true
+			else
+				# 未プッシュのコミットがあるか確認する
+				git_unpushed=$(git -C "$cwd" --no-optional-locks rev-list "@{u}..HEAD" --count 2>/dev/null || echo 0)
+				if [ "$git_unpushed" -gt 0 ]; then
+					# 未プッシュのコミットがある → 青
+					git_line_color="$BLUE"
+				else
+					# 完全にきれいな状態 → 緑
+					git_line_color="$GREEN"
+				fi
+			fi
+		fi
 	fi
 fi
 
@@ -210,14 +247,20 @@ SEP="${GRAY} │ ${RESET}"
 ctx_color=$(color_for_pct "$ctx_pct_int")
 
 # 1行目：ディレクトリ
-line1="${dir_name}"
+line1="${CYAN}󰉋 ${dir_name}${RESET}"
 
 # 2行目：git（リポジトリ内の場合のみ）
 line2=""
 if [ -n "$git_repo" ] && [ -n "$git_branch" ]; then
-	line2="git: ${git_repo} [${git_branch}]"
+	push_mark=""
+	if $git_no_remote; then
+		push_mark=" ↑✗"
+	elif [ "$git_unpushed" -gt 0 ]; then
+		push_mark=" ↑${git_unpushed}"
+	fi
+	line2="${git_line_color} ${git_repo} [${git_branch}]${push_mark}${RESET}"
 elif [ -n "$git_branch" ]; then
-	line2="git: [${git_branch}]"
+	line2="${git_line_color} [${git_branch}]${push_mark}${RESET}"
 fi
 
 # 3行目：モデル名 + CTX
