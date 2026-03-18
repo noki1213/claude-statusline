@@ -253,9 +253,9 @@ countdown() {
 	local hours=$(( (diff % 86400) / 3600 ))
 	local mins=$(( (diff % 3600) / 60 ))
 	if [ "$days" -eq 0 ]; then
-		printf '  %2dh%2dm' "$hours" "$mins"
+		printf '   %02dh %02dm' "$hours" "$mins"
 	else
-		printf '%dd%2dh%2dm' "$days" "$hours" "$mins"
+		printf '%dd %02dh %02dm' "$days" "$hours" "$mins"
 	fi
 }
 
@@ -325,10 +325,10 @@ line4=""
 if [ -n "$FIVE_HOUR_PCT" ]; then
 	c5=$(color_for_pct "$FIVE_HOUR_PCT")
 	bar5=$(progress_bar "$FIVE_HOUR_PCT" "$IDEAL5")
-	line4="${c5}5h  ${bar5}  $(printf '%3s' "${FIVE_HOUR_PCT}")%${RESET}"
+	line4="${c5}5h ${bar5} $(printf '%3s' "${FIVE_HOUR_PCT}")%${RESET}"
 	if [ -n "$five_reset_display" ]; then
 		dt5=$(reset_datetime "$FIVE_HOUR_RESET")
-		line4+="  ${five_reset_display} ${dt5}"
+		line4+=" ${five_reset_display} ${dt5}"
 	fi
 else
 	line4="${GRAY}5h  ░░░░░░░░░░   --%${RESET}"
@@ -339,10 +339,10 @@ line5=""
 if [ -n "$SEVEN_DAY_PCT" ]; then
 	c7=$(color_for_pct "$SEVEN_DAY_PCT")
 	bar7=$(progress_bar "$SEVEN_DAY_PCT" "$IDEAL7")
-	line5="${c7}7d  ${bar7}  $(printf '%3s' "${SEVEN_DAY_PCT}")%${RESET}"
+	line5="${c7}7d ${bar7} $(printf '%3s' "${SEVEN_DAY_PCT}")%${RESET}"
 	if [ -n "$seven_reset_display" ]; then
 		dt7=$(reset_datetime "$SEVEN_DAY_RESET")
-		line5+="  ${seven_reset_display} ${dt7}"
+		line5+=" ${seven_reset_display} ${dt7}"
 	fi
 else
 	line5="${GRAY}7d  ░░░░░░░░░░   --%${RESET}"
