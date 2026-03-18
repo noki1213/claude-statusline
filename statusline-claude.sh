@@ -310,13 +310,26 @@ fi
 # 3行目：モデル名 + CTX
 line3="${model_name}${SEP}${ctx_color}CTX ${ctx_pct_int}%${RESET}"
 
+# ---------- エポック秒からリセット日時の文字列を生成する ----------
+# ( 3/18 Wed 14:32) 形式、月・日はスペース揃え
+reset_datetime() {
+	local epoch="$1"
+	[ -z "$epoch" ] || [ "$epoch" = "0" ] && echo "" && return
+	local dt
+	dt=$(date -r "$epoch" +'%m/%d %a %H:%M')
+	printf '(%s)' "$dt"
+}
+
 # ---------- 4行目（5時間レートリミット）----------
 line4=""
 if [ -n "$FIVE_HOUR_PCT" ]; then
 	c5=$(color_for_pct "$FIVE_HOUR_PCT")
 	bar5=$(progress_bar "$FIVE_HOUR_PCT" "$IDEAL5")
 	line4="${c5}5h  ${bar5}  $(printf '%3s' "${FIVE_HOUR_PCT}")%${RESET}"
-	[ -n "$five_reset_display" ] && line4+="  ${five_reset_display}"
+	if [ -n "$five_reset_display" ]; then
+		dt5=$(reset_datetime "$FIVE_HOUR_RESET")
+		line4+="  ${five_reset_display} ${dt5}"
+	fi
 else
 	line4="${GRAY}5h  ░░░░░░░░░░   --%${RESET}"
 fi
@@ -327,7 +340,10 @@ if [ -n "$SEVEN_DAY_PCT" ]; then
 	c7=$(color_for_pct "$SEVEN_DAY_PCT")
 	bar7=$(progress_bar "$SEVEN_DAY_PCT" "$IDEAL7")
 	line5="${c7}7d  ${bar7}  $(printf '%3s' "${SEVEN_DAY_PCT}")%${RESET}"
-	[ -n "$seven_reset_display" ] && line5+="  ${seven_reset_display}"
+	if [ -n "$seven_reset_display" ]; then
+		dt7=$(reset_datetime "$SEVEN_DAY_RESET")
+		line5+="  ${seven_reset_display} ${dt7}"
+	fi
 else
 	line5="${GRAY}7d  ░░░░░░░░░░   --%${RESET}"
 fi
