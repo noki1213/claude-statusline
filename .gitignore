@@ -1,1 +1,4 @@
 ref/
+.claude/
+.github/github-instructions.md
+agent.md
