@@ -85,6 +85,7 @@ git_branch=""
 git_repo=""
 git_line_color="$GREEN"
 git_no_remote=false
+git_not_owned=false
 git_unpushed=0
 git_behind=0
 if [ -n "$cwd" ] && [ -d "$cwd" ]; then
@@ -94,24 +95,38 @@ if [ -n "$cwd" ] && [ -d "$cwd" ]; then
 		git_toplevel=$(git -C "$cwd" --no-optional-locks rev-parse --show-toplevel 2>/dev/null || true)
 		git_repo=$(basename "$git_toplevel")
 
-		# git の状態を調べて色を決める
-		porcelain=$(git -C "$cwd" --no-optional-locks status --porcelain 2>/dev/null || true)
-		# 未ステージの変更がある（新規・編集・削除を含む）か確認する（2文字目がスペース以外）
-		has_unstaged=$(echo "$porcelain" | grep -c '^.[^ ]' 2>/dev/null || echo 0)
-		# ステージ済みだが未コミットの変更があるか確認する（1文字目が変更あり・2文字目がスペース）
-		has_staged=$(echo "$porcelain" | grep -c '^[^ ?] ' 2>/dev/null || echo 0)
+		# リモートが設定されているか確認する
+		has_remote=$(git -C "$cwd" --no-optional-locks remote 2>/dev/null | wc -l | tr -d ' ')
 
-		if [ "$has_unstaged" -gt 0 ]; then
-			# 未ステージの変更がある（git add が必要）→ 赤
-			git_line_color="$RED"
-		elif [ "$has_staged" -gt 0 ]; then
-			# git add 済みだが未コミット → 黄
-			git_line_color="$YELLOW"
-		else
-			# リモートが設定されているか確認する
-			has_remote=$(git -C "$cwd" --no-optional-locks remote 2>/dev/null | wc -l | tr -d ' ')
-			if [ "$has_remote" -eq 0 ]; then
-				# リモートなし → 青 + ↑✗ マークをつける
+		# 他の人のリポジトリ（クローンしてきたもの）かどうか確認する
+		if [ "$has_remote" -gt 0 ]; then
+			github_user=$(grep '^\s*user:' ~/.config/gh/hosts.yml 2>/dev/null | head -1 | awk '{print $2}')
+			if [ -n "$github_user" ]; then
+				remote_url=$(git -C "$cwd" --no-optional-locks remote get-url origin 2>/dev/null || true)
+				if [ -n "$remote_url" ] && ! echo "$remote_url" | grep -q "$github_user"; then
+					# 他の人のリポジトリ → 色なし、↑↓ なし
+					git_not_owned=true
+					git_line_color=""
+				fi
+			fi
+		fi
+
+		if ! $git_not_owned; then
+			# git の状態を調べて色を決める
+			porcelain=$(git -C "$cwd" --no-optional-locks status --porcelain 2>/dev/null || true)
+			# 未ステージの変更がある（新規・編集・削除を含む）か確認する（2文字目がスペース以外）
+			has_unstaged=$(echo "$porcelain" | grep -c '^.[^ ]' 2>/dev/null || echo 0)
+			# ステージ済みだが未コミットの変更があるか確認する（1文字目が変更あり・2文字目がスペース）
+			has_staged=$(echo "$porcelain" | grep -c '^[^ ?] ' 2>/dev/null || echo 0)
+
+			if [ "$has_unstaged" -gt 0 ]; then
+				# 未ステージの変更がある（git add が必要）→ 赤
+				git_line_color="$RED"
+			elif [ "$has_staged" -gt 0 ]; then
+				# git add 済みだが未コミット → 黄
+				git_line_color="$YELLOW"
+			elif [ "$has_remote" -eq 0 ]; then
+				# リモートなし → 青
 				git_line_color="$BLUE"
 				git_no_remote=true
 			else
